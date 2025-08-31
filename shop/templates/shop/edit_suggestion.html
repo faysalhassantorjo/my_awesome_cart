@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Suggestion - MyShop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white bg-opacity-75 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">MyShop</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#">Home</a>
+                <a class="nav-link" href="{% url 'suggestion_page' %}">Suggestions</a>
+                {% if user.is_authenticated %}
+                <span class="nav-link">Hi {{ user.username }}</span>
+                <a class="nav-link" href="#">Logout</a>
+                {% else %}
+                <a class="nav-link" href="#">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container py-5">
+        <h1 class="text-center text-white mb-5">Edit Your Suggestion</h1>
+
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">Update Suggestion</h3>
+
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form.description.label_tag }}
+                                {{ form.description }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.image.label_tag }}
+                                {{ form.image }}
+                                {% if suggestion.image %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Current Image:</small><br />
+                                    <img src="{{ suggestion.image.url }}" class="img-fluid rounded" style="max-height: 200px;" alt="Current Image" />
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <a href="{% url 'suggestion_page' %}" class="btn btn-outline-light">Back to Suggestions</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

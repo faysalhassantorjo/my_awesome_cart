@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyShop - Suggestions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; }
+        .suggestion-image {
+            max-height: 400px;
+            max-width: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white bg-opacity-75 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">MyShop</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#">Home</a>
+                <a class="nav-link active" href="#">Suggestions</a>
+                {% if user.is_authenticated %}
+                <span class="nav-link">Hi {{ user.username }}</span>
+                <a class="nav-link" href="#">Logout</a>
+                {% else %}
+                <a class="nav-link" href="#">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Page Title -->
+        <h1 class="text-center text-white mb-5">Suggestions from Users</h1>
+
+        <!-- Suggestions -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto">
+                {% for s in page_obj %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary rounded-circle text-white fw-bold me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                {{ s.user.username|first|upper }}
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ s.user.username }}</h6>
+                                <small class="text-muted">{{ s.created_at|date:"F d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                        <p>{{ s.description }}</p>
+                        {% if s.image %}
+                        <div class="text-center mb-3">
+                            <img src="{{ s.image.url }}" class="img-fluid rounded suggestion-image" alt="Suggestion">
+                        </div>
+                        {% endif %}
+
+                        <!-- Edit & Delete Button (only for post owner) -->
+                        {% if user == s.user %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'edit_suggestion' s.pk %}" class="btn btn-sm btn-warning me-2">Edit</a>
+                            <a href="{% url 'delete_suggestion' s.pk %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this suggestion?');">Delete</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <h4 class="text-muted">No suggestions yet.</h4>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="row">
+    <div class="col-lg-8 mx-auto">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">«</a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">»</a>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    </div>
+</div>
+
+
+        <!-- Create Form -->
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="card shadow border-0">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>Share Your Ideas
+                        </h3>
+                        <small class="opacity-75">Help us improve with your suggestions</small>
+                    </div>
+                    <div class="card-body">
+                        {% if user.is_authenticated %}
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form.description.label_tag }}
+                                {{ form.description }}
+                            </div>
+                            <div class="mb-4">
+                                {{ form.image.label_tag }}
+                                {{ form.image }}
+                                <div class="form-text">Optional: Add an image to support your suggestion</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="bi bi-send me-2"></i>Submit Suggestion
+                            </button>
+                        </form>
+                        {% else %}
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <i class="bi bi-person-circle text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            <p class="text-muted mb-3">Join our community to share your valuable suggestions</p>
+                            <a href="#" class="btn btn-outline-primary px-4">Sign In to Continue</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

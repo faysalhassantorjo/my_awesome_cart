@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .checkout-card {
+      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.95);
+      border: none;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      animation: slideUp 0.6s ease-out;
+    }
+    .order-item {
+      background: rgba(102, 126, 234, 0.1);
+      border-left: 4px solid #667eea;
+      animation: fadeInLeft 0.8s ease-out 0.2s both;
+    }
+    .total-section {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+    .btn-confirm {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      border: none;
+      transform: translateY(0);
+      transition: all 0.3s ease;
+      animation: pulse 2s infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+      background: linear-gradient(45deg, #20c997, #28a745);
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } }
+    @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-30px); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+      50% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    }
+    .price-tag { color: #28a745; font-weight: bold; }
+    .icon-bounce { animation: bounce 1s ease-out 0.6s; }
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card checkout-card rounded-4">
+          <div class="card-body p-4">
+            <!-- Header -->
+            <div class="text-center mb-4">
+              <i class="fas fa-shopping-cart fa-3x text-primary mb-3 icon-bounce"></i>
+              <h2 class="card-title fw-bold text-dark">Checkout</h2>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="mb-4">
+              <h4 class="fw-bold mb-3 text-center">
+                <i class="fas fa-receipt me-2"></i>Order Summary
+              </h4>
+
+              {% for item in order_items %}
+                <div class="order-item p-3 rounded-3 mb-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h5 class="mb-2 fw-semibold">{{ item.product.product_name }}</h5>
+                      <div class="row text-muted small">
+                        <div class="col-6">
+                          <i class="fas fa-tag me-1"></i>
+                          Price per unit: <span class="price-tag">${{ item.product.price }}</span>
+                        </div>
+                        <div class="col-6">
+                          <i class="fas fa-boxes me-1"></i>
+                          Quantity: <span class="fw-bold">{{ item.quantity }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+
+              <!-- Coupon Input -->
+              <div class="input-group mb-3">
+                <input type="text" id="couponInput" class="form-control" placeholder="Enter Coupon Code">
+                <button onclick="applyCoupon()" type="button" class="btn btn-primary">Apply</button>
+              </div>
+              <div id="discountMessage" class="text-success fw-bold mt-2"></div>
+
+              <!-- Total Price -->
+              <h3 id="totalPrice" data-original="{{ total_price }}">${{ total_price }}</h3>
+
+              <!-- Total Section -->
+              <div class="total-section p-3 rounded-3 text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-calculator me-2"></i>Total:
+                  </h4>
+                  <h3 class="mb-0 fw-bold" id="finalTotal">${{ total_price }}</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <form method="post" action="{% url 'checkout' order.id %}" class="text-center">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-confirm btn-lg px-5 py-3 rounded-pill fw-bold text-white w-100">
+                <i class="fas fa-check-circle me-2"></i>
+                Confirm Your Order
+                <i class="fas fa-arrow-right ms-2"></i>
+              </button>
+            </form>
+
+            <!-- Security Badge -->
+            <div class="text-center mt-3">
+              <small class="text-muted">
+                <i class="fas fa-shield-alt me-1"></i>
+                Secure checkout protected
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script>
+    function applyCoupon() {
+      let code = document.getElementById('couponInput').value;
+      fetch(`/apply-coupon/?code=${code}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.valid) {
+            let discount = data.discount;
+            let originalTotal = parseFloat(document.getElementById('totalPrice').dataset.original);
+            let discountedPrice = originalTotal - (originalTotal * discount / 100);
+            document.getElementById('totalPrice').innerText = `$${discountedPrice.toFixed(2)}`;
+            document.getElementById('finalTotal').innerText = `$${discountedPrice.toFixed(2)}`;
+            document.getElementById('discountMessage').innerText = `✅ ${discount}% discount applied!`;
+          } else {
+            document.getElementById('discountMessage').innerText = "❌ Invalid coupon code.";
+          }
+        });
+    }
+
+    // Ripple effect on Confirm button
+    document.querySelector('.btn-confirm').addEventListener('click', function (e) {
+      let ripple = document.createElement('span');
+      let rect = this.getBoundingClientRect();
+      let size = Math.max(rect.width, rect.height);
+      let x = e.clientX - rect.left - size / 2;
+      let y = e.clientY - rect.top - size / 2;
+      ripple.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        left: ${x}px;
+        top: ${y}px;
+        background: rgba(255,255,255,0.5);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+      `;
+      this.appendChild(ripple);
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
