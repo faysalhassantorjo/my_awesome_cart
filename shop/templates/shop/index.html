@@ -175,7 +175,7 @@ let socket = new WebSocket("ws://127.0.0.1:8000/ws/ac/");
 
 socket.onopen = function() {
     console.log("Connected!");
-    socket.send(JSON.stringify({ message: "Hello server" }));
+    // socket.send(JSON.stringify({ message: "Hello server" }));
 };
 
 socket.onmessage = function(event) {

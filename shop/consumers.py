@@ -1,7 +1,8 @@
-from channels.consumer import SyncConsumer, AsyncConsumer
+# from channels.consumer import SyncConsumer, AsyncConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 
 
-class MySyncConsumer(SyncConsumer):
+class MySyncConsumer(WebsocketConsumer):
     def connect(self, event):
         print("websocket connected successfully...", event)
         # Accept the connection
@@ -16,18 +17,18 @@ class MySyncConsumer(SyncConsumer):
         print("WebSocket disconnected...", event)
 
     
+import json
+class MyAsyncConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        # Accept first
+        await self.accept()
 
-class MyAsyncConsumer(AsyncConsumer):
-    async def websocket_connect(self, event):
-        print("websocket connected successfully...", event)
-        await self.send({
-            "type": "websocket.accept"
-        })
+        # Now you can safely send
+        await self.send(text_data=json.dumps({"message": "WebSocket connected successfully"}))
 
-    async def websocket_receive(self, event):
-        print("WebSocket received...", event)
+    async def disconnect(self, close_code):
+        print("Disconnected:", close_code)
 
-    async def websocket_disconnect(self, event):
-        print("WebSocket disconnected...", event)
-
-    
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        await self.send(text_data=json.dumps({"echo": data}))
